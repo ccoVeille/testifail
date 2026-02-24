@@ -9,7 +9,7 @@ If you don't want to add a dependency, you can:
 - simply copy the content of `internal/testifail.go` into your project, and only this file.
 - replace the package in the copied file with the package name of your tests (e.g., `package mypackage_test`).
 - the file will provide unexported `assert` and `require` variables that you can use in your tests, just like you would with testify.
-- You can remove all `stretchr/testify` imports from your project as they are no longer needed, and the local variables will take their place.
+- You can remove all `github.com/stretchr/testify` imports from your project as they are no longer needed, and the local variables will take their place.
 
 ### Dependency mode
 
