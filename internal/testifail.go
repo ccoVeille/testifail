@@ -15,6 +15,21 @@ import (
 	"testing"
 )
 
+// TB is the minimal interface that testifail needs to work, [*testing.T] implements it.
+//
+// this allows anyone to use their own testing framework as long as it implements this interface.
+type TB interface {
+	Helper()
+	Error(args ...any)
+	Fatal(args ...any)
+}
+
+// interface validations to ensure TB is implemented by testing.T and testing.B
+var (
+	_ TB = (testing.TB)(nil)
+	_ TB = (*testing.T)(nil)
+)
+
 type (
 	nonfatal struct{}
 	fatal    struct{}
@@ -43,7 +58,7 @@ func formatMsgArgs(msgAndArgs ...any) string {
 	return fmt.Sprintf(msg, msgAndArgs[1:]...)
 }
 
-func (nonfatal) fail(t *testing.T, msgFailure string, msgAndArgs ...any) bool {
+func (nonfatal) fail(t TB, msgFailure string, msgAndArgs ...any) bool {
 	t.Helper()
 	if len(msgAndArgs) > 0 {
 		msgFailure += ": " + formatMsgArgs(msgAndArgs...)
@@ -52,7 +67,7 @@ func (nonfatal) fail(t *testing.T, msgFailure string, msgAndArgs ...any) bool {
 	return false
 }
 
-func (fatal) fail(t *testing.T, msgFailure string, msgAndArgs ...any) {
+func (fatal) fail(t TB, msgFailure string, msgAndArgs ...any) {
 	t.Helper()
 	if len(msgAndArgs) > 0 {
 		msgFailure += ": " + formatMsgArgs(msgAndArgs...)
@@ -60,7 +75,7 @@ func (fatal) fail(t *testing.T, msgFailure string, msgAndArgs ...any) {
 	t.Fatal(msgFailure)
 }
 
-func (a nonfatal) Equal(t *testing.T, expected, actual any, msgAndArgs ...any) bool {
+func (a nonfatal) Equal(t TB, expected, actual any, msgAndArgs ...any) bool {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {
 		return a.fail(t, fmt.Sprintf("not equal:\nexpected: %#v\nactual:   %#v", expected, actual), msgAndArgs...)
@@ -68,14 +83,14 @@ func (a nonfatal) Equal(t *testing.T, expected, actual any, msgAndArgs ...any) b
 	return true
 }
 
-func (a fatal) Equal(t *testing.T, expected, actual any, msgAndArgs ...any) {
+func (a fatal) Equal(t TB, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {
 		a.fail(t, fmt.Sprintf("not equal:\nexpected: %#v\nactual:   %#v", expected, actual), msgAndArgs...)
 	}
 }
 
-func (a nonfatal) NotEqual(t *testing.T, expected, actual any, msgAndArgs ...any) bool {
+func (a nonfatal) NotEqual(t TB, expected, actual any, msgAndArgs ...any) bool {
 	t.Helper()
 	if reflect.DeepEqual(expected, actual) {
 		return a.fail(t, fmt.Sprintf("should not be equal: %#v", actual), msgAndArgs...)
@@ -83,7 +98,7 @@ func (a nonfatal) NotEqual(t *testing.T, expected, actual any, msgAndArgs ...any
 	return true
 }
 
-func (a fatal) NotEqual(t *testing.T, expected, actual any, msgAndArgs ...any) {
+func (a fatal) NotEqual(t TB, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 	if reflect.DeepEqual(expected, actual) {
 		a.fail(t, fmt.Sprintf("should not be equal: %#v", actual), msgAndArgs...)
@@ -102,7 +117,7 @@ func isNil(i any) bool {
 	return false
 }
 
-func (a nonfatal) Nil(t *testing.T, object any, msgAndArgs ...any) bool {
+func (a nonfatal) Nil(t TB, object any, msgAndArgs ...any) bool {
 	t.Helper()
 	if !isNil(object) {
 		return a.fail(t, fmt.Sprintf("expected nil, got: %#v", object), msgAndArgs...)
@@ -110,14 +125,14 @@ func (a nonfatal) Nil(t *testing.T, object any, msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) Nil(t *testing.T, object any, msgAndArgs ...any) {
+func (a fatal) Nil(t TB, object any, msgAndArgs ...any) {
 	t.Helper()
 	if !isNil(object) {
 		a.fail(t, fmt.Sprintf("expected nil, got: %#v", object), msgAndArgs...)
 	}
 }
 
-func (a nonfatal) NotNil(t *testing.T, object any, msgAndArgs ...any) bool {
+func (a nonfatal) NotNil(t TB, object any, msgAndArgs ...any) bool {
 	t.Helper()
 	if isNil(object) {
 		return a.fail(t, "expected not nil", msgAndArgs...)
@@ -125,14 +140,14 @@ func (a nonfatal) NotNil(t *testing.T, object any, msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) NotNil(t *testing.T, object any, msgAndArgs ...any) {
+func (a fatal) NotNil(t TB, object any, msgAndArgs ...any) {
 	t.Helper()
 	if isNil(object) {
 		a.fail(t, "expected not nil", msgAndArgs...)
 	}
 }
 
-func (a nonfatal) True(t *testing.T, value bool, msgAndArgs ...any) bool {
+func (a nonfatal) True(t TB, value bool, msgAndArgs ...any) bool {
 	t.Helper()
 	if !value {
 		return a.fail(t, "expected true, got false", msgAndArgs...)
@@ -140,14 +155,14 @@ func (a nonfatal) True(t *testing.T, value bool, msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) True(t *testing.T, value bool, msgAndArgs ...any) {
+func (a fatal) True(t TB, value bool, msgAndArgs ...any) {
 	t.Helper()
 	if !value {
 		a.fail(t, "expected true, got false", msgAndArgs...)
 	}
 }
 
-func (a nonfatal) False(t *testing.T, value bool, msgAndArgs ...any) bool {
+func (a nonfatal) False(t TB, value bool, msgAndArgs ...any) bool {
 	t.Helper()
 	if value {
 		return a.fail(t, "expected false, got true", msgAndArgs...)
@@ -155,14 +170,14 @@ func (a nonfatal) False(t *testing.T, value bool, msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) False(t *testing.T, value bool, msgAndArgs ...any) {
+func (a fatal) False(t TB, value bool, msgAndArgs ...any) {
 	t.Helper()
 	if value {
 		a.fail(t, "expected false, got true", msgAndArgs...)
 	}
 }
 
-func (a nonfatal) NoError(t *testing.T, err error, msgAndArgs ...any) bool {
+func (a nonfatal) NoError(t TB, err error, msgAndArgs ...any) bool {
 	t.Helper()
 	if err != nil {
 		return a.fail(t, fmt.Sprintf("expected no error, got: %v", err), msgAndArgs...)
@@ -170,14 +185,14 @@ func (a nonfatal) NoError(t *testing.T, err error, msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) NoError(t *testing.T, err error, msgAndArgs ...any) {
+func (a fatal) NoError(t TB, err error, msgAndArgs ...any) {
 	t.Helper()
 	if err != nil {
 		a.fail(t, fmt.Sprintf("expected no error, got: %v", err), msgAndArgs...)
 	}
 }
 
-func (a nonfatal) Error(t *testing.T, err error, msgAndArgs ...any) bool {
+func (a nonfatal) Error(t TB, err error, msgAndArgs ...any) bool {
 	t.Helper()
 	if err == nil {
 		return a.fail(t, "expected error, got nil", msgAndArgs...)
@@ -185,14 +200,14 @@ func (a nonfatal) Error(t *testing.T, err error, msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) Error(t *testing.T, err error, msgAndArgs ...any) {
+func (a fatal) Error(t TB, err error, msgAndArgs ...any) {
 	t.Helper()
 	if err == nil {
 		a.fail(t, "expected error, got nil", msgAndArgs...)
 	}
 }
 
-func (a nonfatal) Panics(t *testing.T, f func(), msgAndArgs ...any) bool {
+func (a nonfatal) Panics(t TB, f func(), msgAndArgs ...any) bool {
 	t.Helper()
 	defer func() {
 		if r := recover(); r == nil {
@@ -203,7 +218,7 @@ func (a nonfatal) Panics(t *testing.T, f func(), msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) Panics(t *testing.T, f func(), msgAndArgs ...any) {
+func (a fatal) Panics(t TB, f func(), msgAndArgs ...any) {
 	t.Helper()
 	defer func() {
 		if r := recover(); r == nil {
@@ -213,7 +228,7 @@ func (a fatal) Panics(t *testing.T, f func(), msgAndArgs ...any) {
 	f()
 }
 
-func (a nonfatal) Empty(t *testing.T, object any, msgAndArgs ...any) bool {
+func (a nonfatal) Empty(t TB, object any, msgAndArgs ...any) bool {
 	t.Helper()
 	if !isEmpty(object) {
 		return a.fail(t, fmt.Sprintf("expected empty, got: %#v", object), msgAndArgs...)
@@ -221,7 +236,7 @@ func (a nonfatal) Empty(t *testing.T, object any, msgAndArgs ...any) bool {
 	return true
 }
 
-func (a fatal) Empty(t *testing.T, object any, msgAndArgs ...any) {
+func (a fatal) Empty(t TB, object any, msgAndArgs ...any) {
 	t.Helper()
 	if !isEmpty(object) {
 		a.fail(t, fmt.Sprintf("expected empty, got: %#v", object), msgAndArgs...)
@@ -246,7 +261,7 @@ func isEmpty(object any) bool {
 	return false
 }
 
-func (a nonfatal) Len(t *testing.T, object any, length int, msgAndArgs ...any) bool {
+func (a nonfatal) Len(t TB, object any, length int, msgAndArgs ...any) bool {
 	t.Helper()
 	v := reflect.ValueOf(object)
 	switch v.Kind() {
@@ -260,7 +275,7 @@ func (a nonfatal) Len(t *testing.T, object any, length int, msgAndArgs ...any) b
 	}
 }
 
-func (a fatal) Len(t *testing.T, object any, length int, msgAndArgs ...any) {
+func (a fatal) Len(t TB, object any, length int, msgAndArgs ...any) {
 	t.Helper()
 	v := reflect.ValueOf(object)
 	switch v.Kind() {
