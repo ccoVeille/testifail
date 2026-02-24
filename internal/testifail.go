@@ -25,27 +25,45 @@ var (
 	require fatal
 )
 
-func (nonfatal) fail(t *testing.T, msg string, msgAndArgs ...any) bool {
+// formatMsgArgs formats the msgAndArgs into a single string message.
+func formatMsgArgs(msgAndArgs ...any) string {
+	if len(msgAndArgs) == 0 {
+		return ""
+	}
+
+	msg, ok := msgAndArgs[0].(string)
+	if !ok {
+		return fmt.Sprintf("invalid message, first argument must be a string: %#v", msgAndArgs[0])
+	}
+
+	if len(msgAndArgs) == 1 {
+		return msg
+	}
+
+	return fmt.Sprintf(msg, msgAndArgs[1:]...)
+}
+
+func (nonfatal) fail(t *testing.T, msgFailure string, msgAndArgs ...any) bool {
 	t.Helper()
 	if len(msgAndArgs) > 0 {
-		msg = fmt.Sprintf(msg, msgAndArgs...)
+		msgFailure += ": " + formatMsgArgs(msgAndArgs...)
 	}
-	t.Error(msg)
+	t.Error(msgFailure)
 	return false
 }
 
-func (fatal) fail(t *testing.T, msg string, msgAndArgs ...any) {
+func (fatal) fail(t *testing.T, msgFailure string, msgAndArgs ...any) {
 	t.Helper()
 	if len(msgAndArgs) > 0 {
-		msg = fmt.Sprintf(msg, msgAndArgs...)
+		msgFailure += ": " + formatMsgArgs(msgAndArgs...)
 	}
-	t.Fatal(msg)
+	t.Fatal(msgFailure)
 }
 
 func (a nonfatal) Equal(t *testing.T, expected, actual any, msgAndArgs ...any) bool {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {
-		return a.fail(t, "not equal:\nexpected: %#v\nactual:   %#v", expected, actual)
+		return a.fail(t, fmt.Sprintf("not equal:\nexpected: %#v\nactual:   %#v", expected, actual), msgAndArgs...)
 	}
 	return true
 }
@@ -53,14 +71,14 @@ func (a nonfatal) Equal(t *testing.T, expected, actual any, msgAndArgs ...any) b
 func (a fatal) Equal(t *testing.T, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {
-		a.fail(t, "not equal:\nexpected: %#v\nactual:   %#v", expected, actual)
+		a.fail(t, fmt.Sprintf("not equal:\nexpected: %#v\nactual:   %#v", expected, actual), msgAndArgs...)
 	}
 }
 
 func (a nonfatal) NotEqual(t *testing.T, expected, actual any, msgAndArgs ...any) bool {
 	t.Helper()
 	if reflect.DeepEqual(expected, actual) {
-		return a.fail(t, "should not be equal: %#v", actual)
+		return a.fail(t, fmt.Sprintf("should not be equal: %#v", actual), msgAndArgs...)
 	}
 	return true
 }
@@ -68,7 +86,7 @@ func (a nonfatal) NotEqual(t *testing.T, expected, actual any, msgAndArgs ...any
 func (a fatal) NotEqual(t *testing.T, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 	if reflect.DeepEqual(expected, actual) {
-		a.fail(t, "should not be equal: %#v", actual)
+		a.fail(t, fmt.Sprintf("should not be equal: %#v", actual), msgAndArgs...)
 	}
 }
 
@@ -87,7 +105,7 @@ func isNil(i any) bool {
 func (a nonfatal) Nil(t *testing.T, object any, msgAndArgs ...any) bool {
 	t.Helper()
 	if !isNil(object) {
-		return a.fail(t, "expected nil, got: %#v", object)
+		return a.fail(t, fmt.Sprintf("expected nil, got: %#v", object), msgAndArgs...)
 	}
 	return true
 }
@@ -95,14 +113,14 @@ func (a nonfatal) Nil(t *testing.T, object any, msgAndArgs ...any) bool {
 func (a fatal) Nil(t *testing.T, object any, msgAndArgs ...any) {
 	t.Helper()
 	if !isNil(object) {
-		a.fail(t, "expected nil, got: %#v", object)
+		a.fail(t, fmt.Sprintf("expected nil, got: %#v", object), msgAndArgs...)
 	}
 }
 
 func (a nonfatal) NotNil(t *testing.T, object any, msgAndArgs ...any) bool {
 	t.Helper()
 	if isNil(object) {
-		return a.fail(t, "expected not nil")
+		return a.fail(t, "expected not nil", msgAndArgs...)
 	}
 	return true
 }
@@ -110,14 +128,14 @@ func (a nonfatal) NotNil(t *testing.T, object any, msgAndArgs ...any) bool {
 func (a fatal) NotNil(t *testing.T, object any, msgAndArgs ...any) {
 	t.Helper()
 	if isNil(object) {
-		a.fail(t, "expected not nil")
+		a.fail(t, "expected not nil", msgAndArgs...)
 	}
 }
 
 func (a nonfatal) True(t *testing.T, value bool, msgAndArgs ...any) bool {
 	t.Helper()
 	if !value {
-		return a.fail(t, "expected true, got false")
+		return a.fail(t, "expected true, got false", msgAndArgs...)
 	}
 	return true
 }
@@ -125,14 +143,14 @@ func (a nonfatal) True(t *testing.T, value bool, msgAndArgs ...any) bool {
 func (a fatal) True(t *testing.T, value bool, msgAndArgs ...any) {
 	t.Helper()
 	if !value {
-		a.fail(t, "expected true, got false")
+		a.fail(t, "expected true, got false", msgAndArgs...)
 	}
 }
 
 func (a nonfatal) False(t *testing.T, value bool, msgAndArgs ...any) bool {
 	t.Helper()
 	if value {
-		return a.fail(t, "expected false, got true")
+		return a.fail(t, "expected false, got true", msgAndArgs...)
 	}
 	return true
 }
@@ -140,14 +158,14 @@ func (a nonfatal) False(t *testing.T, value bool, msgAndArgs ...any) bool {
 func (a fatal) False(t *testing.T, value bool, msgAndArgs ...any) {
 	t.Helper()
 	if value {
-		a.fail(t, "expected false, got true")
+		a.fail(t, "expected false, got true", msgAndArgs...)
 	}
 }
 
 func (a nonfatal) NoError(t *testing.T, err error, msgAndArgs ...any) bool {
 	t.Helper()
 	if err != nil {
-		return a.fail(t, "expected no error, got: %v", err)
+		return a.fail(t, fmt.Sprintf("expected no error, got: %v", err), msgAndArgs...)
 	}
 	return true
 }
@@ -155,14 +173,14 @@ func (a nonfatal) NoError(t *testing.T, err error, msgAndArgs ...any) bool {
 func (a fatal) NoError(t *testing.T, err error, msgAndArgs ...any) {
 	t.Helper()
 	if err != nil {
-		a.fail(t, "expected no error, got: %v", err)
+		a.fail(t, fmt.Sprintf("expected no error, got: %v", err), msgAndArgs...)
 	}
 }
 
 func (a nonfatal) Error(t *testing.T, err error, msgAndArgs ...any) bool {
 	t.Helper()
 	if err == nil {
-		return a.fail(t, "expected error, got nil")
+		return a.fail(t, "expected error, got nil", msgAndArgs...)
 	}
 	return true
 }
@@ -170,7 +188,7 @@ func (a nonfatal) Error(t *testing.T, err error, msgAndArgs ...any) bool {
 func (a fatal) Error(t *testing.T, err error, msgAndArgs ...any) {
 	t.Helper()
 	if err == nil {
-		a.fail(t, "expected error, got nil")
+		a.fail(t, "expected error, got nil", msgAndArgs...)
 	}
 }
 
@@ -178,7 +196,7 @@ func (a nonfatal) Panics(t *testing.T, f func(), msgAndArgs ...any) bool {
 	t.Helper()
 	defer func() {
 		if r := recover(); r == nil {
-			_ = a.fail(t, "expected panic, but function did not panic")
+			_ = a.fail(t, "expected panic, but function did not panic", msgAndArgs...)
 		}
 	}()
 	f()
@@ -189,7 +207,7 @@ func (a fatal) Panics(t *testing.T, f func(), msgAndArgs ...any) {
 	t.Helper()
 	defer func() {
 		if r := recover(); r == nil {
-			a.fail(t, "expected panic, but function did not panic")
+			a.fail(t, "expected panic, but function did not panic", msgAndArgs...)
 		}
 	}()
 	f()
@@ -198,7 +216,7 @@ func (a fatal) Panics(t *testing.T, f func(), msgAndArgs ...any) {
 func (a nonfatal) Empty(t *testing.T, object any, msgAndArgs ...any) bool {
 	t.Helper()
 	if !isEmpty(object) {
-		return a.fail(t, "expected empty, got: %#v", object)
+		return a.fail(t, fmt.Sprintf("expected empty, got: %#v", object), msgAndArgs...)
 	}
 	return true
 }
@@ -206,7 +224,7 @@ func (a nonfatal) Empty(t *testing.T, object any, msgAndArgs ...any) bool {
 func (a fatal) Empty(t *testing.T, object any, msgAndArgs ...any) {
 	t.Helper()
 	if !isEmpty(object) {
-		a.fail(t, "expected empty, got: %#v", object)
+		a.fail(t, fmt.Sprintf("expected empty, got: %#v", object), msgAndArgs...)
 	}
 }
 
@@ -234,11 +252,11 @@ func (a nonfatal) Len(t *testing.T, object any, length int, msgAndArgs ...any) b
 	switch v.Kind() {
 	case reflect.Array, reflect.Slice, reflect.Map, reflect.Chan, reflect.String:
 		if v.Len() != length {
-			return a.fail(t, "unexpected length, expected %d got %d", length, v.Len())
+			return a.fail(t, fmt.Sprintf("unexpected length, expected %d got %d", length, v.Len()), msgAndArgs...)
 		}
 		return true
 	default:
-		return a.fail(t, "Len not supported for kind %s", v.Kind())
+		return a.fail(t, fmt.Sprintf("Len not supported for kind %s", v.Kind()), msgAndArgs...)
 	}
 }
 
@@ -248,9 +266,9 @@ func (a fatal) Len(t *testing.T, object any, length int, msgAndArgs ...any) {
 	switch v.Kind() {
 	case reflect.Array, reflect.Slice, reflect.Map, reflect.Chan, reflect.String:
 		if v.Len() != length {
-			a.fail(t, "unexpected length, expected %d got %d", length, v.Len())
+			a.fail(t, fmt.Sprintf("unexpected length, expected %d got %d", length, v.Len()), msgAndArgs...)
 		}
 	default:
-		a.fail(t, "Len not supported for kind %s", v.Kind())
+		a.fail(t, fmt.Sprintf("Len not supported for kind %s", v.Kind()), msgAndArgs...)
 	}
 }
