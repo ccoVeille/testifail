@@ -1,6 +1,20 @@
 # testifail
 brain dead and limited replacement for https://github.com/stretchr/testify
 
+## How to use this package
+
+### Copy-paste mode
+
+If you don't want to add a dependency, you can:
+- simply copy the content of `internal/testifail.go` into your project, and only this file.
+- replace the package in the copied file with the package name of your tests (e.g., `package mypackage_test`).
+- the file will provide unexported `assert` and `require` variables that you can use in your tests, just like you would with testify.
+- You can remove all `stretchr/testify` imports from your project as they are no longer needed, and the local variables will take their place.
+
+### Dependency mode
+
+TBD
+
 ## Motivation
 
 [testify](https://github.com/stretchr/testify) is a widely-used testing framework in the Go ecosystem, but it comes with significant complexity. After years of maintenance challenges and debates about API improvements, the historical maintainer has [declared that testify v2 will never happen](https://github.com/stretchr/testify/discussions/1560#discussioncomment-8657735):

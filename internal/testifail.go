@@ -1,5 +1,14 @@
 package internal
 
+// You can copy-paste this file in your tests to use the assertion functions
+// Note: the package name must be adapted to the package of your tests
+//
+// Once done, you can mimic the testify packages, by calling assert.Equal(t, expected, actual) or require.Nil(t, actual) in your tests
+
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: Copyright 2025 Emilien Puget <https://github.com/emilien-puget>
+// SPDX-FileCopyrightText: Copyright 2026 Christophe Colombier <https://github.com/ccoVeille>
+
 import (
 	"fmt"
 	"reflect"
