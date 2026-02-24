@@ -13,7 +13,23 @@ If you don't want to add a dependency, you can:
 
 ### Dependency mode
 
-TBD
+Add this module as a dependency import [`assert`](https://pkg.go.dev/github.com/ccoVeille/testifail/assert) and [`require`](https://pkg.go.dev/github.com/ccoVeille/testifail/require) in your tests:
+
+```go
+import (
+	"testing"
+
+	"github.com/ccoVeille/testifail/assert"
+	"github.com/ccoVeille/testifail/require"
+)
+
+func TestMyFunction(t *testing.T) {
+	result, err := MyFunction()
+	require.NoError(t, err)
+	expected := 42
+	assert.Equal(t, expected, result)
+}
+```
 
 ## Motivation
 

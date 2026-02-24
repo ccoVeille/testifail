@@ -212,13 +212,19 @@ func (a fatal) Error(t TB, err error, msgAndArgs ...any) {
 
 func (a nonfatal) Panics(t TB, f func(), msgAndArgs ...any) bool {
 	t.Helper()
-	defer func() {
-		if r := recover(); r == nil {
-			_ = a.fail(t, "expected panic, but function did not panic", msgAndArgs...)
-		}
+
+	var didPanic bool
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				_ = a.fail(t, "expected panic, but function did not panic", msgAndArgs...)
+				return
+			}
+			didPanic = true
+		}()
+		f()
 	}()
-	f()
-	return true
+	return didPanic
 }
 
 func (a fatal) Panics(t TB, f func(), msgAndArgs ...any) {
