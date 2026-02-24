@@ -1,13 +1,16 @@
-package internal
-
-// You can copy-paste this file in your tests to use the assertion functions
-// Note: the package name must be adapted to the package of your tests
-//
-// Once done, you can mimic the testify packages, by calling assert.Equal(t, expected, actual) or require.Nil(t, actual) in your tests
-
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: Copyright 2025 Emilien Puget <https://github.com/emilien-puget>
 // SPDX-FileCopyrightText: Copyright 2026 Christophe Colombier <https://github.com/ccoVeille>
+
+package internal
+
+// You can copy-paste this file in your tests to use the assertion functions.
+// When copying, keep the SPDX-License-Identifier and SPDX-FileCopyrightText lines above
+// to preserve the required attribution under the MIT license.
+//
+// Note: the package name must be adapted to the package of your tests.
+// Once done, you can mimic the testify packages, by calling assert.Equal(t, expected, actual)
+// or require.Nil(t, actual) in your tests.
 
 import (
 	"fmt"
@@ -15,7 +18,7 @@ import (
 	"testing"
 )
 
-// TB is the minimal interface that testifail needs to work, [*testing.T] implements it.
+// TB is the minimal interface that testifail needs to work, [testing.T] implements it.
 //
 // this allows anyone to use their own testing framework as long as it implements this interface.
 type TB interface {
@@ -24,7 +27,7 @@ type TB interface {
 	Fatal(args ...any)
 }
 
-// interface validations to ensure TB is implemented by testing.T and testing.B
+// interface validations
 var (
 	_ TB = (testing.TB)(nil)
 	_ TB = (*testing.T)(nil)
